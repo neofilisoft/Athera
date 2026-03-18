@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Athera Chronicle — Demo</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <!-- ── INTRO SCREEN ── -->
+  <div id="intro">
+    <div class="intro-title">ATHERA CHRONICLE</div>
+    <div class="intro-sub">DUNGEON CRAWLER x URBAN ACTION RPG</div>
+    <div class="intro-engine">FELISS ENGINE SIMULATION  |  RENDERER3D  |  ASTERCORE PHYSICS</div>
+    <div class="intro-wave" id="introCountdown">Wave 1 in 4s...</div>
+  </div>
+
+  <!-- ── END SCREEN ── -->
+  <div id="endscreen" class="hidden">
+    <div class="end-box">
+      <div class="end-title" id="endTitle">GAME OVER</div>
+      <div class="end-stats" id="endStats"></div>
+      <button class="end-btn" id="endBtn" onclick="restartGame()">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <!-- ── HUD ── -->
+  <div id="hud" class="hidden">
+    <!-- Left panel -->
+    <div class="hud-panel hud-left">
+      <div class="bar-row">
+        <span class="bar-label">HP</span>
+        <div class="bar-bg"><div class="bar-fill" id="barHP"></div></div>
+        <span class="bar-val" id="valHP"></span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">MP</span>
+        <div class="bar-bg"><div class="bar-fill" id="barMP" style="background:#4488ff;box-shadow:0 0 6px #4488ff88"></div></div>
+        <span class="bar-val" id="valMP"></span>
+      </div>
+      <div class="bar-row" style="margin-top:2px">
+        <span class="bar-label" style="color:#444;font-size:9px">XP</span>
+        <div class="bar-bg" style="height:5px"><div class="bar-fill" id="barXP" style="background:#ffd700;box-shadow:0 0 5px #ffd70088;height:5px"></div></div>
+        <span class="bar-val" id="valXP" style="color:#886600"></span>
+      </div>
+      <div class="hud-stats">
+        <span id="statLevel"></span>
+        <span id="statAtk"></span>
+      </div>
+      <div id="statScore" class="hud-score"></div>
+    </div>
+
+    <!-- Right panel -->
+    <div class="hud-panel hud-right">
+      <div class="wave-label" id="waveLabel"></div>
+      <div class="enemy-count" id="enemyCount"></div>
+      <div class="wave-next" id="waveNext"></div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item"><span class="legend-dot" style="background:#e74c3c;box-shadow:0 0 5px #e74c3c"></span>GRUNT</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#8e44ad;box-shadow:0 0 5px #8e44ad"></span>SHADE</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#d35400;box-shadow:0 0 5px #d35400"></span>ENFORCER</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#16a085;box-shadow:0 0 5px #16a085"></span>SPECTER</div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-bar">
+      WASD Move &nbsp;|&nbsp; SHIFT Sprint &nbsp;|&nbsp; SPACE Roll &nbsp;|&nbsp; F/Click Slash &nbsp;|&nbsp; Q Magic &nbsp;|&nbsp; R Restart
+    </div>
+  </div>
+
+  <!-- ── CANVAS ── -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Three.js r128 from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
