@@ -1,6 +1,6 @@
 /* ================================================================
-   Athera Chronicle style.css
-   Feliss Web DEMO
+   Athera Chronicle v3.0 — style.css
+   Feliss Engine DEMO
    ================================================================ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;background:#01010a;overflow:hidden;font-family:monospace;user-select:none;-webkit-user-select:none}
