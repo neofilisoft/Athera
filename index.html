@@ -2,81 +2,132 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Athera Chronicle — Demo</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen"/>
+  <title>Athera Chronicle</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-  <!-- ── INTRO SCREEN ── -->
-  <div id="intro">
-    <div class="intro-title">ATHERA CHRONICLE</div>
-    <div class="intro-sub">DUNGEON CRAWLER x URBAN ACTION RPG</div>
-    <div class="intro-engine">FELISS ENGINE SIMULATION  |  RENDERER3D  |  ASTERCORE PHYSICS</div>
-    <div class="intro-wave" id="introCountdown">Wave 1 in 4s...</div>
+<!-- Canvas -->
+<canvas id="gameCanvas"></canvas>
+
+<!-- ── TITLE SCREEN ── -->
+<div id="titleScreen">
+  <div class="title-logo">ATHERA CHRONICLE</div>
+  <div class="title-sub">Dungeon Crawler RPG</div>
+  <div class="title-engine">FELISS ENGINE  |  RENDERER3D </div>
+  <div id="pressAny" class="press-any blink">PRESS ANY BUTTON</div>
+  <div id="mainMenu" class="main-menu hidden">
+    <button class="menu-btn" onclick="G_startNew()">NEW GAME</button>
+    <button class="menu-btn" id="continueBtn" onclick="G_continue()">CONTINUE</button>
+    <button class="menu-btn" onclick="G_showDiff()">DIFFICULTY</button>
   </div>
-
-  <!-- ── END SCREEN ── -->
-  <div id="endscreen" class="hidden">
-    <div class="end-box">
-      <div class="end-title" id="endTitle">GAME OVER</div>
-      <div class="end-stats" id="endStats"></div>
-      <button class="end-btn" id="endBtn" onclick="restartGame()">PLAY AGAIN</button>
-    </div>
+  <div id="diffPanel" class="diff-panel hidden">
+    <div class="diff-title">SELECT DIFFICULTY</div>
+    <div id="diffButtons"></div>
+    <button class="menu-btn back-btn" onclick="G_showMenu()">BACK</button>
   </div>
+  <div class="title-ver">v3.0 DEMO</div>
+</div>
 
-  <!-- ── HUD ── -->
-  <div id="hud" class="hidden">
-    <!-- Left panel -->
-    <div class="hud-panel hud-left">
-      <div class="bar-row">
-        <span class="bar-label">HP</span>
-        <div class="bar-bg"><div class="bar-fill" id="barHP"></div></div>
-        <span class="bar-val" id="valHP"></span>
-      </div>
-      <div class="bar-row">
-        <span class="bar-label">MP</span>
-        <div class="bar-bg"><div class="bar-fill" id="barMP" style="background:#4488ff;box-shadow:0 0 6px #4488ff88"></div></div>
-        <span class="bar-val" id="valMP"></span>
-      </div>
-      <div class="bar-row" style="margin-top:2px">
-        <span class="bar-label" style="color:#444;font-size:9px">XP</span>
-        <div class="bar-bg" style="height:5px"><div class="bar-fill" id="barXP" style="background:#ffd700;box-shadow:0 0 5px #ffd70088;height:5px"></div></div>
-        <span class="bar-val" id="valXP" style="color:#886600"></span>
-      </div>
-      <div class="hud-stats">
-        <span id="statLevel"></span>
-        <span id="statAtk"></span>
-      </div>
-      <div id="statScore" class="hud-score"></div>
-    </div>
+<!-- ── PAUSE MENU ── -->
+<div id="pauseMenu" class="hidden">
+  <div class="pause-box">
+    <div class="pause-title">PAUSED</div>
+    <button class="menu-btn" onclick="G_resume()">RESUME</button>
+    <button class="menu-btn" onclick="G_save()">SAVE PROGRESS</button>
+    <button class="menu-btn danger-btn" onclick="G_goTitle()">TITLE SCREEN</button>
+  </div>
+</div>
 
-    <!-- Right panel -->
-    <div class="hud-panel hud-right">
-      <div class="wave-label" id="waveLabel"></div>
-      <div class="enemy-count" id="enemyCount"></div>
-      <div class="wave-next" id="waveNext"></div>
-    </div>
-
-    <!-- Legend -->
-    <div class="legend">
-      <div class="legend-item"><span class="legend-dot" style="background:#e74c3c;box-shadow:0 0 5px #e74c3c"></span>GRUNT</div>
-      <div class="legend-item"><span class="legend-dot" style="background:#8e44ad;box-shadow:0 0 5px #8e44ad"></span>SHADE</div>
-      <div class="legend-item"><span class="legend-dot" style="background:#d35400;box-shadow:0 0 5px #d35400"></span>ENFORCER</div>
-      <div class="legend-item"><span class="legend-dot" style="background:#16a085;box-shadow:0 0 5px #16a085"></span>SPECTER</div>
-    </div>
-
-    <!-- Controls -->
-    <div class="controls-bar">
-      WASD Move &nbsp;|&nbsp; SHIFT Sprint &nbsp;|&nbsp; SPACE Roll &nbsp;|&nbsp; F/Click Slash &nbsp;|&nbsp; Q Magic &nbsp;|&nbsp; R Restart
+<!-- ── END SCREEN ── -->
+<div id="endScreen" class="hidden">
+  <div class="end-box">
+    <div class="end-title" id="endTitle"></div>
+    <div class="end-stats" id="endStats"></div>
+    <div class="end-btns">
+      <button class="menu-btn" onclick="G_startNew()">PLAY AGAIN</button>
+      <button class="menu-btn" onclick="G_goTitle()">TITLE</button>
     </div>
   </div>
+</div>
 
-  <!-- ── CANVAS ── -->
-  <canvas id="gameCanvas"></canvas>
+<!-- ── HUD ── -->
+<div id="hud" class="hidden">
+  <div class="hud-panel hud-left">
+    <div class="bar-row">
+      <span class="bar-lbl">HP</span>
+      <div class="bar-bg"><div class="bar-fill" id="barHP"></div></div>
+      <span class="bar-val" id="valHP"></span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-lbl">MP</span>
+      <div class="bar-bg"><div class="bar-fill bar-mp" id="barMP"></div></div>
+      <span class="bar-val" id="valMP"></span>
+    </div>
+    <div class="bar-row xp-row">
+      <span class="bar-lbl xp-lbl">XP</span>
+      <div class="bar-bg xp-bg"><div class="bar-fill bar-xp" id="barXP"></div></div>
+      <span class="bar-val xp-val" id="valXP"></span>
+    </div>
+    <div class="hud-stats">
+      <span id="statLv"></span><span id="statAtk"></span>
+    </div>
+    <div id="statScore" class="hud-score"></div>
+    <div class="weapon-row">
+      <span id="weaponLabel" class="weapon-lbl"></span>
+      <span id="bulletBar" class="bullet-bar"></span>
+    </div>
+  </div>
 
-  <!-- Three.js r128 from CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="game.js"></script>
+  <div class="hud-panel hud-right">
+    <div id="waveLabel" class="wave-lbl"></div>
+    <div id="diffBadge" class="diff-badge"></div>
+    <div id="enemyCount" class="enemy-ct"></div>
+    <div id="waveNext" class="wave-next"></div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="ldot" style="background:#e74c3c"></span>GRUNT</div>
+    <div class="legend-item"><span class="ldot" style="background:#8e44ad"></span>SHADE</div>
+    <div class="legend-item"><span class="ldot" style="background:#d35400"></span>ENFORCER</div>
+    <div class="legend-item"><span class="ldot" style="background:#16a085"></span>SPECTER</div>
+  </div>
+
+  <div class="ctrl-bar" id="ctrlBar">
+    WASD Move | SHIFT Sprint | SPACE Dash | F Sword | G Gun | Q Magic | TAB Toggle | ESC Pause
+  </div>
+</div>
+
+<!-- ── MOBILE CONTROLS ── -->
+<div id="mobileCtrl" class="hidden">
+  <div id="dpad">
+    <div class="dp-row"><button class="dp-btn" id="btnUp">&#9650;</button></div>
+    <div class="dp-row dp-mid">
+      <button class="dp-btn" id="btnLeft">&#9664;</button>
+      <div class="dp-center"></div>
+      <button class="dp-btn" id="btnRight">&#9654;</button>
+    </div>
+    <div class="dp-row"><button class="dp-btn" id="btnDown">&#9660;</button></div>
+  </div>
+  <div id="actionPad">
+    <div class="act-row">
+      <button class="act-btn sprint-btn" id="mbSprint">RUN</button>
+      <button class="act-btn dash-btn"   id="mbDash">DASH</button>
+    </div>
+    <div class="act-row">
+      <button class="act-btn magic-btn"  id="mbMagic">MAGIC</button>
+      <button class="act-btn atk-btn"    id="mbAtk">ATK</button>
+    </div>
+    <div class="act-row">
+      <button class="act-btn tog-btn"    id="mbToggle">SWORD</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="game.js"></script>
 </body>
 </html>
