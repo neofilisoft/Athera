@@ -46,6 +46,7 @@ var EDEF={
   shade:   {hp:28, atk:19,spd:145,sight:300,ar:32,acd:0.85,xp:35,sc:180},
   enforcer:{hp:130,atk:29,spd:55, sight:170,ar:48,acd:2.0, xp:65,sc:350},
   specter: {hp:20, atk:22,spd:178,sight:330,ar:28,acd:0.7, xp:50,sc:260},
+  boss:    {hp:420,atk:48,spd:64, sight:240,ar:58,acd:1.35,xp:220,sc:1800,scale:1.28,boss:true},
 };
 
 // ── Difficulty ──
@@ -72,6 +73,8 @@ var SPAWNS=[
 
 // ── Utils ──
 function d2(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+function d2xy(ax,ay,bx,by){var dx=ax-bx,dy=ay-by;return Math.hypot(dx,dy);}
+function d2sqxy(ax,ay,bx,by){var dx=ax-bx,dy=ay-by;return dx*dx+dy*dy;}
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 function rnd(a,b){return a+Math.random()*(b-a);}
 function ri(a,b){return Math.floor(rnd(a,b+1));}
@@ -273,6 +276,28 @@ function buildEnforcer(){
   return g;
 }
 
+function buildBoss(){
+  var g=buildEnforcer();
+  g.name="boss";
+  g.scale.setScalar(EDEF.boss.scale||1.28);
+  var body=g.getObjectByName("body");
+  var head=g.getObjectByName("head");
+  if(body&&body.material){
+    body.material=body.material.clone();
+    body.material.color.setHex(0x5e1208);
+    body.material.emissive=new THREE.Color(0x220500);
+    body.material.emissiveIntensity=0.6;
+  }
+  if(head&&head.material){
+    head.material=head.material.clone();
+    head.material.color.setHex(0x7a120a);
+    head.material.emissive=new THREE.Color(0x280700);
+    head.material.emissiveIntensity=0.8;
+  }
+  addL(g,0xff2200,1.8,7.2,0,0.75,0,"bossAura");
+  return g;
+}
+
 function buildSpecter(){
   var g=new THREE.Group(); g.name="specter";
   addDisc(g,0.22,0.25);
@@ -445,6 +470,15 @@ var isPaused=false;
 var isMobile=false;
 var currentWaves=[];
 
+function getSpecialBossChance(diffKey,wave){
+  if(diffKey==="hard"&&wave>=10&&wave<=12) return 0.5;
+  if(diffKey==="nightmare"&&wave>=10&&wave<=20){
+    if(wave===10||wave===15||wave===18||wave===20) return 0.7;
+    return 0.6;
+  }
+  return 0;
+}
+
 function mkGame(fromSave){
   _uid=0;
   currentWaves=buildWaves(currentDiff);
@@ -452,6 +486,7 @@ function mkGame(fromSave){
     phase:"playing",wave:0,score:0,
     betweenWave:true,waveTimer:3.0,
     spawnQ:[],spawnCD:0,
+    aliveEnemies:0,deadEnemies:0,cleanupTimer:0.8,hudTimer:0,
     player:{x:GW/2,y:GH/2,hp:100,maxHp:100,mana:60,maxMana:60,manaT:0,level:1,xp:0,xpNext:100,atk:25,def:5,spd:195,atkCD:0,rollCD:0,iframes:0,flash:0,angle:0,walkT:0,atkAnim:0,rolling:false,rollDur:0,rvx:0,rvy:0},
     enemies:[],projs:[],shake:0,time:0,
   };
@@ -486,6 +521,11 @@ function startWave(){
   if(G.wave>currentWaves.length){endGame(true);return;}
   var def=currentWaves[G.wave-1];
   var q=[];def.forEach(function(d){for(var i=0;i<d.n;i++)q.push(d.t);});
+  var bossChance=getSpecialBossChance(currentDiff,G.wave);
+  if(bossChance>0&&Math.random()<bossChance){
+    q.push("boss");
+    showNotif("SPECIAL BOSS INCOMING");
+  }
   for(var i=q.length-1;i>0;i--){var j=ri(0,i);var tmp=q[i];q[i]=q[j];q[j]=tmp;}
   G.spawnQ=q;G.spawnCD=0.45;
 }
@@ -493,7 +533,8 @@ function startWave(){
 function spawnEnemy(type){
   var d=EDEF[type];
   var sp=SPAWNS.reduce(function(b,s){return d2(s,G.player)>d2(b,G.player)?s:b;},SPAWNS[0]);
-  G.enemies.push({hp:d.hp,maxHp:d.hp,atk:d.atk,spd:d.spd,sight:d.sight,ar:d.ar,acd:d.acd,xp:d.xp,sc:d.sc,id:uid(),type:type,x:sp.x+rnd(-28,28),y:sp.y+rnd(-28,28),atkCD:0,hurtT:0,state:"patrol",ptx:sp.x+rnd(-60,60),pty:sp.y+rnd(-60,60),ptimer:rnd(2,5),alive:true,wt:0});
+  G.enemies.push({hp:d.hp,maxHp:d.hp,atk:d.atk,spd:d.spd,sight:d.sight,ar:d.ar,acd:d.acd,xp:d.xp,sc:d.sc,id:uid(),type:type,x:sp.x+rnd(-28,28),y:sp.y+rnd(-28,28),atkCD:0,hurtT:0,state:"patrol",ptx:sp.x+rnd(-60,60),pty:sp.y+rnd(-60,60),ptimer:rnd(2,5),alive:true,wt:0,scale:d.scale||1,boss:!!d.boss});
+  G.aliveEnemies++;
 }
 
 // ================================================================
@@ -502,7 +543,7 @@ function spawnEnemy(type){
 function hitEnemy(e,dmg){
   e.hp-=dmg;e.hurtT=0.2;e.state="chase";G.shake=Math.max(G.shake,3);
   if(e.hp<=0){
-    e.alive=false;G.score+=e.sc;G.player.xp+=e.xp;G.shake=Math.max(G.shake,6);
+    e.alive=false;G.aliveEnemies=Math.max(0,G.aliveEnemies-1);G.deadEnemies++;G.score+=e.sc;G.player.xp+=e.xp;G.shake=Math.max(G.shake,6);
     var m=eMeshMap[e.id];if(m){scene.remove(m);delete eMeshMap[e.id];}
     var p=G.player;
     while(p.xp>=p.xpNext){p.xp-=p.xpNext;p.level++;p.xpNext=Math.floor(p.xpNext*1.42);p.maxHp+=20;p.hp=p.maxHp;p.maxMana+=10;p.mana=p.maxMana;p.atk+=5;p.def+=2;}
@@ -512,8 +553,9 @@ function hitEnemy(e,dmg){
 function doMelee(){
   var p=G.player;p.atkCD=0.52;p.atkAnim=0.38;
   var hit=false;
+  var meleeRangeSq=MELEE_RANGE*MELEE_RANGE;
   G.enemies.forEach(function(e){
-    if(e.alive&&d2(p,e)<=MELEE_RANGE){
+    if(e.alive&&d2sqxy(p.x,p.y,e.x,e.y)<=meleeRangeSq){
       hitEnemy(e,p.atk+ri(0,8));
       hit=true;
     }
@@ -564,8 +606,7 @@ function updateGame(dt){
     }
   } else {
     if(G.spawnQ.length>0){G.spawnCD-=dt;if(G.spawnCD<=0){spawnEnemy(G.spawnQ.shift());G.spawnCD=0.48;}}
-    var alive=G.enemies.filter(function(e){return e.alive;}).length;
-    if(!G.spawnQ.length&&!alive){
+    if(!G.spawnQ.length&&!G.aliveEnemies){
       G.betweenWave=true;G.waveTimer=4.0;
       var b=G.wave*500*DIFF[currentDiff].mult;G.score+=Math.floor(b);
       G.player.hp=Math.min(G.player.maxHp,G.player.hp+Math.floor(G.player.maxHp*.18));
@@ -601,10 +642,10 @@ function updateGame(dt){
       delete keys[" "];delete keys["mbdash"];
     }
     // Toggle weapon
-    if(keys["tab"]||keys["mbtoggle"]){
+    if(keys["e"]||keys["mbtoggle"]){
       currentWeapon=currentWeapon==="sword"?"gun":"sword";
       updateWeaponHUD();updateWeaponModel();
-      delete keys["tab"];delete keys["mbtoggle"];
+      delete keys["e"];delete keys["mbtoggle"];
     }
     // Melee
     if((keys["f"]||keys["click"]||keys["mbatk"])&&p.atkCD<=0&&currentWeapon==="sword"){
@@ -625,7 +666,7 @@ function updateGame(dt){
     if(!e.alive)return;
     e.atkCD=Math.max(0,e.atkCD-dt);
     if(e.hurtT>0){e.hurtT-=dt;return;}
-    var dd=d2(e,p);
+    var dd=d2xy(e.x,e.y,p.x,p.y);
     if(e.state==="patrol"&&dd<e.sight)e.state="chase";
     if(e.state==="chase"){if(dd>e.sight*1.7)e.state="patrol";else if(dd<=e.ar)e.state="attack";}
     if(e.state==="attack"&&dd>e.ar*1.5)e.state="chase";
@@ -649,13 +690,25 @@ function updateGame(dt){
 
   // Projectiles
   G.projs=G.projs.filter(function(pr){
+    var hitRadiusSq=26*26;
     pr.x+=pr.vx*dt;pr.y+=pr.vy*dt;pr.life-=dt;
     if(pr.life<=0||isWall(pr.x,pr.y)){var m=pMeshMap[pr.id];if(m){scene.remove(m);delete pMeshMap[pr.id];}return false;}
-    for(var i=0;i<G.enemies.length;i++){var e=G.enemies[i];if(!e.alive||pr.hit[e.id]||d2(pr,e)>26)continue;pr.hit[e.id]=1;hitEnemy(e,pr.dmg);var m2=pMeshMap[pr.id];if(m2){scene.remove(m2);delete pMeshMap[pr.id];}return false;}
+    for(var i=0;i<G.enemies.length;i++){var e=G.enemies[i];if(!e.alive||pr.hit[e.id]||d2sqxy(pr.x,pr.y,e.x,e.y)>hitRadiusSq)continue;pr.hit[e.id]=1;hitEnemy(e,pr.dmg);var m2=pMeshMap[pr.id];if(m2){scene.remove(m2);delete pMeshMap[pr.id];}return false;}
     return true;
   });
 
-  updateHUD();
+  G.cleanupTimer-=dt;
+  if(G.deadEnemies>0&&(G.deadEnemies>=10||G.cleanupTimer<=0)){
+    G.enemies=G.enemies.filter(function(e){return e.alive;});
+    G.deadEnemies=0;
+    G.cleanupTimer=0.8;
+  }
+
+  G.hudTimer-=dt;
+  if(G.hudTimer<=0){
+    updateHUD();
+    G.hudTimer=0.08;
+  }
 }
 
 // ================================================================
@@ -679,13 +732,14 @@ function sync3D(){
 
   G.enemies.forEach(function(e){
     if(!e.alive)return;
-    if(!eMeshMap[e.id]){var m=null;if(e.type==="grunt")m=buildGrunt();else if(e.type==="shade")m=buildShade();else if(e.type==="enforcer")m=buildEnforcer();else if(e.type==="specter")m=buildSpecter();if(m){scene.add(m);eMeshMap[e.id]=m;}}
+    if(!eMeshMap[e.id]){var m=null;if(e.type==="grunt")m=buildGrunt();else if(e.type==="shade")m=buildShade();else if(e.type==="enforcer")m=buildEnforcer();else if(e.type==="specter")m=buildSpecter();else if(e.type==="boss")m=buildBoss();if(m){scene.add(m);eMeshMap[e.id]=m;}}
     var mesh=eMeshMap[e.id];if(!mesh)return;
     e.wt=(e.wt||0)+0.016;
     mesh.rotation.y=Math.atan2(p.x-e.x,p.y-e.y);
     if(e.type==="grunt"){mesh.position.set(e.x/SCALE,Math.sin(e.wt*8)*0.04,e.y/SCALE);var ma=mesh.getObjectByName("armR");if(ma)ma.rotation.x=Math.sin(e.wt*8)*0.45;var mb=mesh.getObjectByName("armL");if(mb)mb.rotation.x=-Math.sin(e.wt*8)*0.35;}
     else if(e.type==="shade"){mesh.position.set(e.x/SCALE,0.25+Math.sin(t*2.4+e.id*0.1)*0.19,e.y/SCALE);var outer=mesh.getObjectByName("outer");if(outer){outer.scale.setScalar(0.94+0.1*Math.sin(t*3+e.id*0.1));outer.rotation.y+=0.022;}}
     else if(e.type==="enforcer"){mesh.position.set(e.x/SCALE,Math.sin(e.wt*5)*0.03,e.y/SCALE);var ma2=mesh.getObjectByName("armL");if(ma2)ma2.rotation.x=Math.sin(e.wt*5)*0.22;var mb2=mesh.getObjectByName("armR");if(mb2)mb2.rotation.x=-Math.sin(e.wt*5)*0.22;}
+    else if(e.type==="boss"){mesh.position.set(e.x/SCALE,0.05+Math.sin(e.wt*4.2)*0.04,e.y/SCALE);var ma3=mesh.getObjectByName("armL");if(ma3)ma3.rotation.x=Math.sin(e.wt*4.2)*0.28;var mb3=mesh.getObjectByName("armR");if(mb3)mb3.rotation.x=-Math.sin(e.wt*4.2)*0.28;var aura=mesh.getObjectByName("bossAura");if(aura)aura.intensity=1.5+0.45*Math.sin(t*5+e.id*0.1);}
     else if(e.type==="specter"){mesh.position.set(e.x/SCALE,0.22+Math.sin(t*3.4+e.id*0.13)*0.22,e.y/SCALE);for(var i=0;i<3;i++){var orb=mesh.getObjectByName("orb"+i);if(orb){var a=t*2.6+(i/3)*Math.PI*2;orb.position.set(Math.cos(a)*0.4,Math.sin(t*2+i)*0.15,Math.sin(a)*0.4);}}var tail=mesh.getObjectByName("tail");if(tail)tail.rotation.x=0.15+Math.sin(t*3)*0.18;var spl=mesh.getObjectByName("plight");if(spl)spl.intensity=0.9+0.4*Math.sin(t*4+e.id*0.1);}
   });
 
@@ -721,7 +775,7 @@ function updateHUD(){
   setBar("barXP",clamp(p.xp/p.xpNext,0,1),null);setText("valXP",p.xp+"/"+p.xpNext);
   setText("statLv","Lv."+p.level);setText("statAtk","ATK "+p.atk+" DEF "+p.def);
   setText("statScore","Score: "+G.score.toLocaleString());
-  var alive=G.enemies.filter(function(e){return e.alive;}).length+G.spawnQ.length;
+  var alive=G.aliveEnemies+G.spawnQ.length;
   var cfg=DIFF[currentDiff];
   setText("waveLabel",G.wave===0?"GET READY":"WAVE "+G.wave+"/"+currentWaves.length);
   var db=document.getElementById("diffBadge");if(db){db.textContent=cfg.name;db.style.color=cfg.col;}
