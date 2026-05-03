@@ -1,7 +1,7 @@
 "use strict";
 // ================================================================
 //  Athera Chronicle — game.js v3.0
-//  Feliss Engine Web Demo (Vanilla JS + Three.js r128)
+//  Balmung Engine Web Demo (Vanilla JS + Three.js r128)
 //
 //  NEW v3: Difficulty system, Gun weapon, PRESS ANY BUTTON menu,
 //          Save/Continue, ESC pause, Mobile touch controls,
