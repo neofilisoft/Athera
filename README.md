@@ -20,13 +20,13 @@ Move Right| "D" / "Arrow Right"
 Action / Shoot| "Space"
 Restart Game| "R"
 
-| Layer | Technology |
+| Action | Key |
 |---|---|
-| Language | C++20 + C# (.NET 10 / Mono) |
-| Engine | Balmung Engine 2.3 (In-house) |
-| ECS | EnTT (header-only) |
-| Math | GLM (column-major, matches Vulkan) |
-| Windowing | SDL2 |
+| Move Up | W / Arrow Up |
+| Move Down | S / Arrow Down |
+| Move Left | A / Arrow Left |
+| Move Right | D / Arrow Right |
+| Action / Shoot | Space |
 | Renderer (primary) | Vulkan 1.3 — dynamic rendering, timeline semaphores, bindless textures |
 | Renderer (fallback) | OpenGL 4.1 |
 | Text | Signed Distance Field fonts (sharp at 720p and 1080p) |
