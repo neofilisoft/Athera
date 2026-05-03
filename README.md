@@ -1,16 +1,16 @@
-# Athera Web Demo
+## Athera Web Demo
 
 Play online: https://neofilisoft.github.io/Athera
 
 ---
 
-Gameplay
+# Gameplay
 
 Athera is a fast-paced arcade game where the player must survive by moving, dodging, and interacting with enemies or objects on screen.
 
 ---
 
-Controls (Key Mapping)
+# Controls (Key Mapping)
 
 Action| Key
 Move Up| "W" / "Arrow Up"
@@ -20,11 +20,23 @@ Move Right| "D" / "Arrow Right"
 Action / Shoot| "Space"
 Restart Game| "R"
 
+| Layer | Technology |
+|---|---|
+| Language | C++20 + C# (.NET 10 / Mono) |
+| Engine | Balmung Engine 2.3 (In-house) |
+| ECS | EnTT (header-only) |
+| Math | GLM (column-major, matches Vulkan) |
+| Windowing | SDL2 |
+| Renderer (primary) | Vulkan 1.3 — dynamic rendering, timeline semaphores, bindless textures |
+| Renderer (fallback) | OpenGL 4.1 |
+| Text | Signed Distance Field fonts (sharp at 720p and 1080p) |
+| Scripting | C# via Mono bridge (events, audio, UI) |
+
 «Note: Key bindings may vary slightly depending on browser focus.»
 
 ---
 
-How to Play
+# How to Play
 
 1. Open the game in your browser
 2. Use WASD or Arrow Keys to move your character
