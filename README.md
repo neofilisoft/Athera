@@ -12,14 +12,6 @@ Athera is a fast-paced arcade game where the player must survive by moving, dodg
 
 # Controls (Key Mapping)
 
-Action| Key
-Move Up| "W" / "Arrow Up"
-Move Down| "S" / "Arrow Down"
-Move Left| "A" / "Arrow Left"
-Move Right| "D" / "Arrow Right"
-Action / Shoot| "Space"
-Restart Game| "R"
-
 | Action | Key |
 |---|---|
 | Move Up | W / Arrow Up |
@@ -27,10 +19,7 @@ Restart Game| "R"
 | Move Left | A / Arrow Left |
 | Move Right | D / Arrow Right |
 | Action / Shoot | Space |
-| Renderer (primary) | Vulkan 1.3 — dynamic rendering, timeline semaphores, bindless textures |
-| Renderer (fallback) | OpenGL 4.1 |
-| Text | Signed Distance Field fonts (sharp at 720p and 1080p) |
-| Scripting | C# via Mono bridge (events, audio, UI) |
+| Restart Game | R |
 
 «Note: Key bindings may vary slightly depending on browser focus.»
 
@@ -46,7 +35,7 @@ Restart Game| "R"
 
 ---
 
-Tech Stack
+# Tech Stack
 
 - HTML5 Canvas
 - Vanilla JavaScript
@@ -71,5 +60,5 @@ Future Improvements
 
 ---
 
-License
+# License
 MIT (Neofilisoft / Studio Balmung)
